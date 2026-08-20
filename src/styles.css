@@ -142,3 +142,95 @@
     color: var(--color-foreground);
   }
 }
+
+/* ============================================================
+   AGIKA Technologies brand design system
+   Neon Blue #00BFFF · Electric Purple #7A5FFF · Dark #0B0B12 · Light #F5F7FA
+   ============================================================ */
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-purple: var(--brand-purple);
+  --color-brand-purple-foreground: var(--brand-purple-foreground);
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-dark-foreground: var(--surface-dark-foreground);
+  --color-surface-dark-muted: var(--surface-dark-muted);
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --radius: 0.875rem;
+  --background: oklch(0.975 0.004 247);
+  --foreground: oklch(0.18 0.025 275);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.025 275);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.025 275);
+  --primary: oklch(0.74 0.152 232);
+  --primary-foreground: oklch(0.16 0.024 280);
+  --secondary: oklch(0.94 0.012 250);
+  --secondary-foreground: oklch(0.22 0.03 275);
+  --muted: oklch(0.945 0.008 250);
+  --muted-foreground: oklch(0.5 0.025 265);
+  --accent: oklch(0.6 0.213 288);
+  --accent-foreground: oklch(0.985 0.005 250);
+  --destructive: oklch(0.6 0.226 27);
+  --destructive-foreground: oklch(0.985 0.005 250);
+  --border: oklch(0.9 0.012 255);
+  --input: oklch(0.9 0.012 255);
+  --ring: oklch(0.74 0.152 232);
+
+  --brand: oklch(0.74 0.152 232);
+  --brand-foreground: oklch(0.16 0.024 280);
+  --brand-purple: oklch(0.6 0.213 288);
+  --brand-purple-foreground: oklch(0.985 0.005 250);
+  --surface-dark: oklch(0.16 0.022 285);
+  --surface-dark-foreground: oklch(0.97 0.006 250);
+  --surface-dark-muted: oklch(0.72 0.02 265);
+
+  --gradient-brand: linear-gradient(120deg, var(--brand), var(--brand-purple));
+  --gradient-dark: linear-gradient(160deg, oklch(0.16 0.022 285), oklch(0.21 0.045 280));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--brand) 25%, transparent),
+    0 18px 40px -18px color-mix(in oklab, var(--brand) 55%, transparent);
+  --shadow-card: 0 10px 30px -18px oklch(0.2 0.03 275 / 0.45);
+}
+
+.dark {
+  --background: oklch(0.13 0.02 285);
+  --foreground: oklch(0.97 0.006 250);
+  --card: oklch(0.18 0.026 285);
+  --card-foreground: oklch(0.97 0.006 250);
+  --popover: oklch(0.18 0.026 285);
+  --popover-foreground: oklch(0.97 0.006 250);
+  --secondary: oklch(0.24 0.032 285);
+  --secondary-foreground: oklch(0.97 0.006 250);
+  --muted: oklch(0.24 0.032 285);
+  --muted-foreground: oklch(0.72 0.02 265);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+}
+
+@utility gradient-brand {
+  background-image: var(--gradient-brand);
+}
+
+@utility text-gradient-brand {
+  background-image: var(--gradient-brand);
+  background-clip: text;
+  color: transparent;
+}
+
+@utility shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+@utility surface-dark-section {
+  background-image: var(--gradient-dark);
+  color: var(--surface-dark-foreground);
+}

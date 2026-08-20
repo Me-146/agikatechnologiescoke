@@ -749,7 +749,7 @@ const recommendationMap: Partial<Record<CategorySlug, CategorySlug[]>> = {
   networking: ["cctv-security", "accessories"],
   gaming: ["accessories", "networking"],
   "pos-systems": ["accessories", "networking"],
-  printers-scanners: ["accessories", "software"],
+  "printers-scanners": ["accessories", "software"],
   software: ["computers", "accessories"],
   accessories: ["computers", "software"],
 };

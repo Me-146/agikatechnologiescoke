@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/site/PageShell";
 import { ShopBrowser } from "@/components/site/ShopBrowser";
 
 export const Route = createFileRoute("/shop")({
-  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { q?: string | undefined } => ({
     q: typeof search["q"] === "string" && search["q"] ? (search["q"] as string) : undefined,
   }),
   head: () => ({

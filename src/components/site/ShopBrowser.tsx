@@ -144,7 +144,7 @@ export function ShopBrowser({
               max={maxPrice}
               min={1000}
               step={500}
-              onValueChange={([v]) => setPrice(v)}
+              onValueChange={(v) => setPrice(v[0] ?? maxPrice)}
               aria-label="Maximum price"
             />
           </FilterGroup>

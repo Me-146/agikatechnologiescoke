@@ -49,7 +49,7 @@ export function Header() {
             <SheetContent side="left" className="w-[85vw] overflow-y-auto p-0">
               <SheetTitle className="sr-only">Menu</SheetTitle>
               <div className="surface-dark-section flex items-center gap-3 p-5">
-                <img src={logo} alt="AGIKA Technologies logo" className="h-11 w-11 rounded-full shadow-glow" />
+                <img src={logo} alt="AGIKA Technologies logo" className="h-11 w-11 rounded-full bg-surface-dark p-0.5 shadow-glow" />
                 <div>
                   <p className="font-display text-lg font-bold">AGIKA Technologies</p>
                   <p className="text-xs text-brand">{site.tagline}</p>
@@ -85,7 +85,7 @@ export function Header() {
           </Sheet>
 
           <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="AGIKA Technologies home">
-            <img src={logo} alt="AGIKA Technologies logo" className="h-10 w-10 rounded-full shadow-glow" />
+            <img src={logo} alt="AGIKA Technologies logo" className="h-10 w-10 rounded-full bg-surface-dark p-0.5 shadow-glow" />
             <span className="hidden sm:block">
               <span className="block font-display text-base font-bold leading-none">AGIKA</span>
               <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Technologies</span>

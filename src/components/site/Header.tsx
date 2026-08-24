@@ -8,6 +8,7 @@ import { categories } from "@/lib/catalog";
 import { site, waLink } from "@/lib/site";
 import { useCart } from "@/lib/cart";
 import { CategoryIcon } from "./ProductImage";
+import logo from "@/assets/agika-logo.png";
 
 const mainLinks = [
   { to: "/services", label: "Services" },
@@ -47,9 +48,12 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[85vw] overflow-y-auto p-0">
               <SheetTitle className="sr-only">Menu</SheetTitle>
-              <div className="surface-dark-section p-5">
-                <p className="font-display text-lg font-bold">AGIKA Technologies</p>
-                <p className="text-xs text-brand">{site.tagline}</p>
+              <div className="surface-dark-section flex items-center gap-3 p-5">
+                <img src={logo} alt="AGIKA Technologies logo" className="h-11 w-11 rounded-full bg-surface-dark p-0.5 shadow-glow" />
+                <div>
+                  <p className="font-display text-lg font-bold">AGIKA Technologies</p>
+                  <p className="text-xs text-brand">{site.tagline}</p>
+                </div>
               </div>
               <nav className="flex flex-col p-4">
                 <Link to="/shop" onClick={() => setOpen(false)} className="py-2 font-medium">
@@ -81,9 +85,7 @@ export function Header() {
           </Sheet>
 
           <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="AGIKA Technologies home">
-            <span className="grid h-9 w-9 place-items-center rounded-xl gradient-brand font-display text-sm font-bold text-brand-foreground shadow-glow">
-              AT
-            </span>
+            <img src={logo} alt="AGIKA Technologies logo" className="h-10 w-10 rounded-full bg-surface-dark p-0.5 shadow-glow" />
             <span className="hidden sm:block">
               <span className="block font-display text-base font-bold leading-none">AGIKA</span>
               <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Technologies</span>

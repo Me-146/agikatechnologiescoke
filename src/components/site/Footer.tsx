@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Facebook, Instagram, Music2, MapPin, Phone, Twitter } from "lucide-react";
 import { categories } from "@/lib/catalog";
 import { site } from "@/lib/site";
+import logo from "@/assets/agika-logo.png";
 
 const services = [
   "Computer Repair",
@@ -25,9 +26,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <div className="flex items-center gap-2">
-            <span className="grid h-10 w-10 place-items-center rounded-xl gradient-brand font-display font-bold text-brand-foreground">
-              AT
-            </span>
+            <img src={logo} alt="AGIKA Technologies logo" className="h-12 w-12 rounded-full shadow-glow" />
             <div>
               <p className="font-display text-lg font-bold">AGIKA Technologies</p>
               <p className="text-xs text-brand">{site.tagline}</p>

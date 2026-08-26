@@ -88,7 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "AGIKA Technologies — Your Trusted IT Partner" },
       { property: "og:description", content: "Technology products and professional IT services in Kenya." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      
       { property: "og:site_name", content: "AGIKA Technologies" },
     ],
     links: [

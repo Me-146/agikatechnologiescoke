@@ -10,7 +10,6 @@ export const site = {
     facebook: "",
     instagram: "",
     tiktok: "",
-    x: "",
   },
 };
 

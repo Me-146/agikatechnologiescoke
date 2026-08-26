@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, Music2, MapPin, Phone, Twitter } from "lucide-react";
+import { Facebook, Instagram, Music2, MapPin, Phone } from "lucide-react";
 import { categories } from "@/lib/catalog";
 import { site } from "@/lib/site";
 import logo from "@/assets/agika-logo.png";
@@ -18,7 +18,6 @@ export function Footer() {
     { key: "facebook", label: "Facebook", href: site.social.facebook, Icon: Facebook },
     { key: "instagram", label: "Instagram", href: site.social.instagram, Icon: Instagram },
     { key: "tiktok", label: "TikTok", href: site.social.tiktok, Icon: Music2 },
-    { key: "x", label: "X", href: site.social.x, Icon: Twitter },
   ];
 
   return (

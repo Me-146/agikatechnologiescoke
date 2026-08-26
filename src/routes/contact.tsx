@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Facebook, Instagram, MapPin, MessageCircle, Music2, Phone, Twitter } from "lucide-react";
+import { Facebook, Instagram, MapPin, MessageCircle, Music2, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,6 @@ function ContactPage() {
     { label: "Facebook", href: site.social.facebook, Icon: Facebook },
     { label: "Instagram", href: site.social.instagram, Icon: Instagram },
     { label: "TikTok", href: site.social.tiktok, Icon: Music2 },
-    { label: "X", href: site.social.x, Icon: Twitter },
   ];
 
   return (

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,14 +55,6 @@ function AuthPage() {
     }
   }
 
-  async function google() {
-    try {
-      await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
-    }
-  }
-
   return (
     <>
       <PageHeader eyebrow="Staff area" title="Sign in" description="Access the AGIKA admin dashboard." />
@@ -94,9 +85,6 @@ function AuthPage() {
                 {busy ? "Please wait..." : mode === "signin" ? "Sign in" : "Sign up"}
               </Button>
             </form>
-            <Button type="button" variant="outline" className="w-full" onClick={google}>
-              Continue with Google
-            </Button>
             <button
               type="button"
               className="w-full text-sm text-muted-foreground underline"

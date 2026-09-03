@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/agika-logo.png";
 import { cn } from "@/lib/utils";
 
-const nav = [
+const nav: Array<{ to: string; label: string; icon: typeof Package; exact?: boolean }> = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { to: "/admin/customers", label: "Customers", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
-] as const;
+];
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);

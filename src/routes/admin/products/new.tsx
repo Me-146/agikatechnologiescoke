@@ -93,6 +93,7 @@ function NewProductPage() {
         description: description.trim(),
         image_url: uploaded.url,
         created_by: uid,
+        published: false,
       });
       if (error) {
         console.error("[admin] product insert failed", error);
@@ -100,7 +101,7 @@ function NewProductPage() {
         throw new Error("Unable to save product. Please try again.");
       }
 
-      toast.success("Product added successfully.");
+      toast.success("Product created successfully. It is currently unpublished.");
       setTitle("");
       setPrice("");
       setDescription("");

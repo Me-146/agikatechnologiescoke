@@ -101,7 +101,7 @@ function NewProductPage() {
         throw new Error("Unable to save product. Please try again.");
       }
 
-      toast.success("Product added successfully.");
+      toast.success("Product created successfully. It is currently unpublished.");
       setTitle("");
       setPrice("");
       setDescription("");

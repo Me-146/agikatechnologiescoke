@@ -93,6 +93,7 @@ function NewProductPage() {
         description: description.trim(),
         image_url: uploaded.url,
         created_by: uid,
+        published: false,
       });
       if (error) {
         console.error("[admin] product insert failed", error);

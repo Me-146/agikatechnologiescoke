@@ -3,7 +3,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/site/PageShell";
-import { ProductImage } from "@/components/site/ProductImage";
+import { StoreProductImage } from "@/components/site/StoreProductImage";
 import { useCart } from "@/lib/cart";
 import { formatKes } from "@/lib/site";
 
@@ -39,35 +39,33 @@ function CartPage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
             <div className="space-y-4">
               {items.map(({ product, qty }) => (
-                <div key={product.slug} className="flex gap-4 rounded-2xl border border-border bg-card p-4">
-                  <ProductImage
-                    category={product.category}
-                    name={product.name}
+                <div key={product.id} className="flex gap-4 rounded-2xl border border-border bg-card p-4">
+                  <StoreProductImage
+                    src={product.image_url}
+                    name={product.title}
                     className="h-24 w-24 shrink-0 rounded-xl"
                     iconClassName="h-8 w-8"
                   />
                   <div className="flex-1">
                     <Link
-                      to="/product/$slug"
-                      params={{ slug: product.slug }}
+                      to="/products/$id"
+                      params={{ id: product.id }}
                       className="font-display text-sm font-semibold hover:text-brand"
                     >
-                      {product.name}
+                      {product.title}
                     </Link>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {product.brand} · {product.condition} · {product.sku}
-                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">AGIKA Technologies</p>
                     <div className="mt-3 flex items-center gap-3">
                       <div className="flex items-center rounded-lg border border-border">
-                        <Button variant="ghost" size="icon" onClick={() => setQty(product.slug, qty - 1)} aria-label="Decrease quantity">
+                        <Button variant="ghost" size="icon" onClick={() => setQty(product.id, qty - 1)} aria-label="Decrease quantity">
                           <Minus className="h-4 w-4" />
                         </Button>
                         <span className="w-8 text-center text-sm font-semibold">{qty}</span>
-                        <Button variant="ghost" size="icon" onClick={() => setQty(product.slug, qty + 1)} aria-label="Increase quantity">
+                        <Button variant="ghost" size="icon" onClick={() => setQty(product.id, qty + 1)} aria-label="Increase quantity">
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => remove(product.slug)}>
+                      <Button variant="ghost" size="sm" onClick={() => remove(product.id)}>
                         <Trash2 className="h-4 w-4" /> Remove
                       </Button>
                     </div>

@@ -87,9 +87,9 @@ function CheckoutPage() {
           <h2 className="font-display text-lg font-bold">Your order</h2>
           <ul className="mt-4 space-y-3 text-sm">
             {items.map(({ product, qty }) => (
-              <li key={product.slug} className="flex justify-between gap-3">
+              <li key={product.id} className="flex justify-between gap-3">
                 <span className="text-muted-foreground">
-                  {product.name} × {qty}
+                  {product.title} × {qty}
                 </span>
                 <span className="font-medium">{formatKes(product.price * qty)}</span>
               </li>

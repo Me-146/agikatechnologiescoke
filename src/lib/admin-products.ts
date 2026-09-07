@@ -12,6 +12,7 @@ export type ProductRow = {
   description: string | null;
   image_url: string | null;
   created_at: string;
+  published: boolean;
 };
 
 /** Client-side validation. Returns an error message, or null when the file is fine. */

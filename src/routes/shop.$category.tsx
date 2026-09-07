@@ -34,7 +34,7 @@ function CategoryPage() {
   return (
     <>
       <PageHeader eyebrow="Shop" title={category.name} description={category.description} />
-      <ShopBrowser fixedCategory={category.slug} />
+      <ShopBrowser initialQuery={category.short} />
     </>
   );
 }

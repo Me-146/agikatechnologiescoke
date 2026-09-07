@@ -54,10 +54,25 @@ const trust = [
 ];
 
 function Home() {
-  const featured = productsByTag("featured", 4);
-  const deals = productsByTag("hot-deal", 4);
-  const bestSellers = productsByTag("best-seller", 4);
-  const newArrivals = productsByTag("new-arrival", 4);
+  const [published, setPublished] = useState<StoreProduct[] | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublishedProducts()
+      .then((rows) => {
+        if (!cancelled) setPublished(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const featured = published?.slice(0, 4) ?? [];
+  const newArrivals = published?.slice(4, 8) ?? [];
 
   return (
     <>

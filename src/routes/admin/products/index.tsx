@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,12 +38,27 @@ function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [target, setTarget] = useState<ProductRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  async function togglePublished(product: ProductRow) {
+    setTogglingId(product.id);
+    const next = !product.published;
+    const { error } = await supabase.from("products").update({ published: next }).eq("id", product.id);
+    setTogglingId(null);
+    if (error) {
+      console.error("[admin] publish toggle failed", error);
+      toast.error("Unable to change publication status. Please try again.");
+      return;
+    }
+    setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, published: next } : p)));
+    toast.success(next ? "Product published — it is now visible to customers." : "Product unpublished — hidden from customers.");
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("products")
-      .select("id,title,price,description,image_url,created_at")
+      .select("id,title,price,description,image_url,created_at,published")
       .order("created_at", { ascending: false });
     if (error) {
       console.error("[admin] load products failed", error);
@@ -106,6 +121,7 @@ function ProductsPage() {
                   <th className="px-4 py-3 font-medium">Title</th>
                   <th className="px-4 py-3 font-medium">Price</th>
                   <th className="px-4 py-3 font-medium">Description</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Created</th>
                   <th className="px-4 py-3 text-right font-medium">Actions</th>
                 </tr>
@@ -125,11 +141,30 @@ function ProductsPage() {
                     <td className="max-w-xs px-4 py-3 text-muted-foreground">
                       <span className="line-clamp-2">{p.description ?? "—"}</span>
                     </td>
+                    <td className="px-4 py-3">
+                      <StatusPill published={p.published} />
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {new Date(p.created_at).toLocaleDateString("en-KE")}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={togglingId === p.id}
+                          onClick={() => togglePublished(p)}
+                        >
+                          {p.published ? (
+                            <>
+                              <EyeOff className="mr-1 h-3.5 w-3.5" /> Unpublish
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="mr-1 h-3.5 w-3.5" /> Publish
+                            </>
+                          )}
+                        </Button>
                         <Button asChild size="sm" variant="outline">
                           <Link to="/admin/products/$id/edit" params={{ id: p.id }}>
                             <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
@@ -161,9 +196,28 @@ function ProductsPage() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       {new Date(p.created_at).toLocaleDateString("en-KE")}
                     </p>
+                    <p className="mt-1">
+                      <StatusPill published={p.published} />
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="col-span-2 h-11"
+                    disabled={togglingId === p.id}
+                    onClick={() => togglePublished(p)}
+                  >
+                    {p.published ? (
+                      <>
+                        <EyeOff className="mr-1 h-4 w-4" /> Unpublish
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="mr-1 h-4 w-4" /> Publish
+                      </>
+                    )}
+                  </Button>
                   <Button asChild variant="outline" className="h-11">
                     <Link to="/admin/products/$id/edit" params={{ id: p.id }}>
                       <Pencil className="mr-1 h-4 w-4" /> Edit
@@ -202,5 +256,14 @@ function ProductsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+function StatusPill({ published }: { published: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-2.5 py-1 text-xs font-medium">
+      <span aria-hidden="true">{published ? "🟢" : "⚪"}</span>
+      {published ? "Published" : "Unpublished"}
+    </span>
   );
 }

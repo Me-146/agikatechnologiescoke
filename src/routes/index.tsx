@@ -1,12 +1,14 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Headphones, MessageCircle, ShieldCheck, Sparkles, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ProductCard } from "@/components/site/ProductCard";
+import { StoreProductCard } from "@/components/site/StoreProductCard";
 import { CategoryIcon } from "@/components/site/ProductImage";
 import { Section } from "@/components/site/PageShell";
-import { categories, productsByTag } from "@/lib/catalog";
+import { categories } from "@/lib/catalog";
+import { fetchPublishedProducts, type StoreProduct } from "@/lib/store";
 import { site, waLink } from "@/lib/site";
 import heroImage from "@/assets/hero-tech.jpg";
 
@@ -158,8 +160,16 @@ function Home() {
         </div>
       </Section>
 
-      <ProductRow title="Featured Products" products={featured} />
-      <ProductRow title="Hot Deals" description="Limited-time prices on popular technology." products={deals} />
+      <ProductRow
+        title="Featured Products"
+        products={featured}
+        loading={published === null && !failed}
+        emptyMessage={
+          failed
+            ? "We could not load our products right now. Please refresh in a moment or message us on WhatsApp."
+            : "AGIKA Technologies is updating our product catalogue. Please check back soon."
+        }
+      />
 
       <Section title="Why choose AGIKA">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -200,7 +210,6 @@ function Home() {
         </div>
       </Section>
 
-      <ProductRow title="Best Sellers" products={bestSellers} />
       <ProductRow title="New Arrivals" products={newArrivals} />
 
       <Section>
@@ -248,12 +257,16 @@ function ProductRow({
   title,
   description,
   products,
+  loading = false,
+  emptyMessage,
 }: {
   title: string;
   description?: string;
-  products: ReturnType<typeof productsByTag>;
+  products: StoreProduct[];
+  loading?: boolean;
+  emptyMessage?: string;
 }) {
-  if (products.length === 0) return null;
+  if (!loading && products.length === 0 && !emptyMessage) return null;
   return (
     <Section
       title={title}
@@ -266,11 +279,32 @@ function ProductRow({
         </Button>
       }
     >
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {products.map((p) => (
-          <ProductCard key={p.slug} product={p} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-80 animate-pulse rounded-2xl border border-border bg-secondary" />
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+          <Button asChild className="mt-5">
+            <a
+              href={waLink("Hello AGIKA Technologies, I would like some help with a product.")}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            </a>
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {products.map((p) => (
+            <StoreProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
     </Section>
   );
 }

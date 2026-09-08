@@ -113,8 +113,8 @@ export async function fetchCategoryBySlug(slug: string): Promise<Category | null
 }
 
 export type ProductFilters = {
-  categorySlug?: string | undefined;
-  brandSlug?: string | undefined;
+  categoryId?: string | undefined;
+  brandId?: string | undefined;
   stock?: "in-stock" | "out-of-stock" | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
@@ -149,14 +149,7 @@ export async function fetchPublishedProducts(filters: ProductFilters = {}): Prom
     console.error("[store] load products failed", error);
     throw new Error("catalogue-unavailable");
   }
-  // Inner-style filtering: rows whose joined row was filtered out come back null.
-  const rows = (data ?? []).filter((r) => {
-    const row = r as { category: unknown; brand: unknown };
-    if (filters.categorySlug && !row.category) return false;
-    if (filters.brandSlug && !row.brand) return false;
-    return true;
-  });
-  return normalise(rows);
+  return normalise(data ?? []);
 }
 
 export async function fetchProductsByIds(ids: string[]): Promise<StoreProduct[]> {

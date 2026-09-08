@@ -129,8 +129,8 @@ export type ProductFilters = {
 export async function fetchPublishedProducts(filters: ProductFilters = {}): Promise<StoreProduct[]> {
   let query = supabase.from("products").select(COLUMNS).eq("published", true);
 
-  if (filters.categorySlug) query = query.eq("categories.slug", filters.categorySlug).not("category_id", "is", null);
-  if (filters.brandSlug) query = query.eq("brands.slug", filters.brandSlug).not("brand_id", "is", null);
+  if (filters.categoryId) query = query.eq("category_id", filters.categoryId);
+  if (filters.brandId) query = query.eq("brand_id", filters.brandId);
   if (filters.stock === "in-stock") query = query.gt("stock_quantity", 0);
   if (filters.stock === "out-of-stock") query = query.lte("stock_quantity", 0);
   if (typeof filters.minPrice === "number") query = query.gte("price", filters.minPrice);

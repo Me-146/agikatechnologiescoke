@@ -1,30 +1,99 @@
 import { useEffect, useMemo, useState } from "react";
-import { MessageCircle, SlidersHorizontal } from "lucide-react";
+import { MessageCircle, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StoreProductCard } from "./StoreProductCard";
-import { formatKes, waLink } from "@/lib/site";
-import { fetchPublishedProducts, type StoreProduct } from "@/lib/store";
+import { waLink } from "@/lib/site";
+import {
+  fetchBrands,
+  fetchCategories,
+  fetchPublishedProducts,
+  type Brand,
+  type Category,
+  type StoreProduct,
+} from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-export function ShopBrowser({ initialQuery = "" }: { initialQuery?: string }) {
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-  const [all, setAll] = useState<StoreProduct[]>([]);
+export type ShopFilters = {
+  q?: string | undefined;
+  category?: string | undefined;
+  brand?: string | undefined;
+  stock?: string | undefined;
+  min?: number | undefined;
+  max?: number | undefined;
+  sort?: string | undefined;
+};
 
-  const [q, setQ] = useState(initialQuery);
-  const [sort, setSort] = useState("relevance");
+const ANY = "any";
+
+export function ShopBrowser({
+  filters,
+  onFiltersChange,
+  lockedCategorySlug,
+}: {
+  filters?: ShopFilters;
+  onFiltersChange?: (next: ShopFilters) => void;
+  lockedCategorySlug?: string;
+}) {
+  const [local, setLocal] = useState<ShopFilters>(filters ?? {});
+  const current = filters ?? local;
+
+  function update(patch: Partial<ShopFilters>) {
+    const next = { ...current, ...patch };
+    setLocal(next);
+    onFiltersChange?.(next);
+  }
+
+  const [taxonomy, setTaxonomy] = useState<{ categories: Category[]; brands: Brand[] }>({
+    categories: [],
+    brands: [],
+  });
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [showFilters, setShowFilters] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
+  const [term, setTerm] = useState(current.q ?? "");
 
   useEffect(() => {
+    setTerm(current.q ?? "");
+  }, [current.q]);
+
+  useEffect(() => {
+    Promise.all([fetchCategories(), fetchBrands()])
+      .then(([categories, brands]) => setTaxonomy({ categories, brands }))
+      .catch(() => setTaxonomy({ categories: [], brands: [] }));
+  }, []);
+
+  const categorySlug = lockedCategorySlug ?? current.category;
+  const categoryId = useMemo(
+    () => taxonomy.categories.find((c) => c.slug === categorySlug)?.id,
+    [taxonomy.categories, categorySlug],
+  );
+  const brandId = useMemo(
+    () => taxonomy.brands.find((b) => b.slug === current.brand)?.id,
+    [taxonomy.brands, current.brand],
+  );
+
+  const taxonomyReady = taxonomy.categories.length > 0 || taxonomy.brands.length > 0;
+  const waitingForTaxonomy = Boolean((categorySlug || current.brand) && !taxonomyReady);
+
+  useEffect(() => {
+    if (waitingForTaxonomy) return;
     let cancelled = false;
     setState("loading");
-    fetchPublishedProducts()
+    fetchPublishedProducts({
+      ...(categorySlug ? { categoryId: categoryId ?? "00000000-0000-0000-0000-000000000000" } : {}),
+      ...(current.brand ? { brandId: brandId ?? "00000000-0000-0000-0000-000000000000" } : {}),
+      ...(current.stock === "in-stock" || current.stock === "out-of-stock" ? { stock: current.stock } : {}),
+      ...(typeof current.min === "number" ? { minPrice: current.min } : {}),
+      ...(typeof current.max === "number" ? { maxPrice: current.max } : {}),
+      ...(current.q ? { q: current.q } : {}),
+      ...(current.sort === "price-asc" || current.sort === "price-desc" ? { sort: current.sort } : {}),
+    })
       .then((rows) => {
         if (cancelled) return;
-        setAll(rows);
+        setProducts(rows);
         setState("ready");
       })
       .catch(() => {
@@ -33,66 +102,155 @@ export function ShopBrowser({ initialQuery = "" }: { initialQuery?: string }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [
+    waitingForTaxonomy,
+    categorySlug,
+    categoryId,
+    brandId,
+    current.brand,
+    current.stock,
+    current.min,
+    current.max,
+    current.q,
+    current.sort,
+  ]);
 
-  const maxPrice = useMemo(() => (all.length ? Math.max(...all.map((p) => p.price)) : 0), [all]);
-  const activePrice = price ?? maxPrice;
+  const hasFilters = Boolean(
+    current.q ||
+      (!lockedCategorySlug && current.category) ||
+      current.brand ||
+      current.stock ||
+      current.min ||
+      current.max ||
+      (current.sort && current.sort !== "newest"),
+  );
 
-  const results = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    let list = all.filter((p) => {
-      if (term) {
-        const haystack = [p.title, p.description ?? ""].join(" ").toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
-      if (activePrice && p.price > activePrice) return false;
-      return true;
-    });
-    if (sort === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
-    if (sort === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
-    if (sort === "newest") list = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
-    return list;
-  }, [all, q, activePrice, sort]);
+  function clearAll() {
+    setTerm("");
+    const next: ShopFilters = lockedCategorySlug ? {} : {};
+    setLocal(next);
+    onFiltersChange?.(next);
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <form
+        className="mb-6 flex flex-wrap items-center gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          update({ q: term.trim() || undefined });
+        }}
+      >
         <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by product name or description..."
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder="Search by product name, description or SKU..."
           aria-label="Search products"
           className="w-full max-w-md"
         />
-        <Select value={sort} onValueChange={setSort}>
+        <Button type="submit" variant="secondary">
+          Search
+        </Button>
+        <Select value={current.sort ?? "newest"} onValueChange={(v) => update({ sort: v })}>
           <SelectTrigger className="w-[190px]" aria-label="Sort products">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="relevance">Sort: Relevance</SelectItem>
             <SelectItem value="newest">Newest first</SelectItem>
             <SelectItem value="price-asc">Price: Low to High</SelectItem>
             <SelectItem value="price-desc">Price: High to Low</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" className="lg:hidden" onClick={() => setShowFilters((s) => !s)}>
+        <Button type="button" variant="outline" className="lg:hidden" onClick={() => setShowFilters((s) => !s)}>
           <SlidersHorizontal className="h-4 w-4" /> Filters
         </Button>
-        {state === "ready" && <p className="ml-auto text-sm text-muted-foreground">{results.length} products</p>}
-      </div>
+        {state === "ready" && <p className="ml-auto text-sm text-muted-foreground">{products.length} products</p>}
+      </form>
 
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
         <aside className={cn("space-y-6", showFilters ? "block" : "hidden lg:block")}>
-          <FilterGroup title={`Max price — ${formatKes(activePrice)}`}>
-            <Slider
-              value={[activePrice]}
-              max={maxPrice || 1}
-              min={0}
-              step={500}
-              onValueChange={(v) => setPrice(v[0] ?? maxPrice)}
-              aria-label="Maximum price"
-            />
+          {!lockedCategorySlug && (
+            <FilterGroup title="Category">
+              <Select value={current.category ?? ANY} onValueChange={(v) => update({ category: v === ANY ? undefined : v })}>
+                <SelectTrigger aria-label="Filter by category">
+                  <SelectValue placeholder="All categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ANY}>All categories</SelectItem>
+                  {taxonomy.categories.map((c) => (
+                    <SelectItem key={c.id} value={c.slug}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterGroup>
+          )}
+
+          <FilterGroup title="Brand">
+            <Select value={current.brand ?? ANY} onValueChange={(v) => update({ brand: v === ANY ? undefined : v })}>
+              <SelectTrigger aria-label="Filter by brand">
+                <SelectValue placeholder="All brands" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ANY}>All brands</SelectItem>
+                {taxonomy.brands.map((b) => (
+                  <SelectItem key={b.id} value={b.slug}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FilterGroup>
+
+          <FilterGroup title="Availability">
+            <Select value={current.stock ?? ANY} onValueChange={(v) => update({ stock: v === ANY ? undefined : v })}>
+              <SelectTrigger aria-label="Filter by availability">
+                <SelectValue placeholder="Any availability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ANY}>Any availability</SelectItem>
+                <SelectItem value="in-stock">In stock</SelectItem>
+                <SelectItem value="out-of-stock">Out of stock</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterGroup>
+
+          <FilterGroup title="Price range (KSh)">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="min-price" className="text-xs text-muted-foreground">
+                  Min
+                </Label>
+                <Input
+                  id="min-price"
+                  type="number"
+                  min="0"
+                  value={current.min ?? ""}
+                  onChange={(e) => update({ min: e.target.value ? Number(e.target.value) : undefined })}
+                />
+              </div>
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="max-price" className="text-xs text-muted-foreground">
+                  Max
+                </Label>
+                <Input
+                  id="max-price"
+                  type="number"
+                  min="0"
+                  value={current.max ?? ""}
+                  onChange={(e) => update({ max: e.target.value ? Number(e.target.value) : undefined })}
+                />
+              </div>
+            </div>
+          </FilterGroup>
+
+          {hasFilters && (
+            <Button variant="outline" className="w-full" onClick={clearAll}>
+              <X className="h-4 w-4" /> Clear filters
+            </Button>
+          )}
+
           <FilterGroup title="Need help choosing?">
             <p className="text-sm text-muted-foreground">
               Our team can confirm stock, specifications and delivery for any product.
@@ -117,19 +275,14 @@ export function ShopBrowser({ initialQuery = "" }: { initialQuery?: string }) {
               title="We could not load the catalogue right now."
               body="Please refresh the page in a moment, or message us on WhatsApp and we will help you straight away."
             />
-          ) : all.length === 0 ? (
+          ) : products.length === 0 ? (
             <EmptyPanel
-              title="AGIKA Technologies is updating our product catalogue. Please check back soon."
-              body="In the meantime, tell us what you are looking for on WhatsApp and we will source it for you."
-            />
-          ) : results.length === 0 ? (
-            <EmptyPanel
-              title="No products match your search"
-              body="Try a different keyword, or chat with us on WhatsApp and we will source it for you."
+              title={hasFilters || lockedCategorySlug ? "No products match this selection yet" : "Our catalogue is being updated"}
+              body="Try a different filter, or chat with us on WhatsApp and we will source exactly what you need."
             />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {results.map((p) => (
+              {products.map((p) => (
                 <StoreProductCard key={p.id} product={p} />
               ))}
             </div>

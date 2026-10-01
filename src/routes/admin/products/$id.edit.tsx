@@ -65,11 +65,11 @@ function EditProductPage() {
       setTitle(row.title);
       setPrice(String(row.price));
       setDescription(row.description ?? "");
-      const d = data as Record<string, unknown>;
+      const d = data as unknown as { sku: string | null; category_id: string | null; brand_id: string | null; sale_price: number | null; stock_quantity: number; low_stock_threshold: number; specifications: unknown; published: boolean };
       setExtras({
-        sku: (d.sku as string) ?? "",
-        category_id: (d.category_id as string) ?? "",
-        brand_id: (d.brand_id as string) ?? "",
+        sku: d.sku ?? "",
+        category_id: d.category_id ?? "",
+        brand_id: d.brand_id ?? "",
         sale_price: d.sale_price == null ? "" : String(d.sale_price),
         stock_quantity: String(d.stock_quantity ?? 0),
         low_stock_threshold: String(d.low_stock_threshold ?? 3),

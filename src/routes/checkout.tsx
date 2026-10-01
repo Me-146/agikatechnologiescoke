@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PageHeader } from "@/components/site/PageShell";
 import { useCart } from "@/lib/cart";
+import { effectivePrice, fetchProductsByIds } from "@/lib/store";
 import { formatKes, site, waLink } from "@/lib/site";
 
 export const Route = createFileRoute("/checkout")({
@@ -26,12 +27,29 @@ export const Route = createFileRoute("/checkout")({
 const DELIVERY_FEE = 350;
 
 function CheckoutPage() {
-  const { items, subtotal } = useCart();
+  const { items, subtotal, hasStockIssue, refresh } = useCart();
   const [method, setMethod] = useState("mpesa");
   const total = subtotal + (items.length ? DELIVERY_FEE : 0);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Re-check live stock right before placing the order.
+    let fresh;
+    try {
+      fresh = await fetchProductsByIds(items.map((i) => i.product.id));
+    } catch {
+      toast.error("Unable to confirm stock right now. Please try again.");
+      return;
+    }
+    const problem = items.find(({ product, qty }) => {
+      const live = fresh.find((p) => p.id === product.id);
+      return !live || live.stock_quantity < qty;
+    });
+    if (problem) {
+      refresh();
+      toast.error(`Not enough stock for ${problem.product.title}. Please update your cart.`);
+      return;
+    }
     toast.success("Order details captured", {
       description: "Online payment goes live once the backend is connected. Confirm your order on WhatsApp for now.",
     });
@@ -91,7 +109,7 @@ function CheckoutPage() {
                 <span className="text-muted-foreground">
                   {product.title} × {qty}
                 </span>
-                <span className="font-medium">{formatKes(product.price * qty)}</span>
+                <span className="font-medium">{formatKes(effectivePrice(product) * qty)}</span>
               </li>
             ))}
             {items.length === 0 && <li className="text-muted-foreground">Your cart is empty.</li>}
@@ -110,7 +128,12 @@ function CheckoutPage() {
               <dd>{formatKes(total)}</dd>
             </div>
           </dl>
-          <Button type="submit" className="mt-4 w-full" disabled={items.length === 0}>
+          {hasStockIssue && (
+            <p className="mt-4 text-sm font-medium text-destructive">
+              Some items exceed available stock. <Link to="/cart" className="underline">Update your cart</Link>.
+            </p>
+          )}
+          <Button type="submit" className="mt-4 w-full" disabled={items.length === 0 || hasStockIssue}>
             Place Order
           </Button>
           <Button asChild variant="secondary" className="mt-2 w-full">

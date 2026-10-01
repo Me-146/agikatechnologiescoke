@@ -52,12 +52,15 @@ export function TaxonomyManager({ table, singular, plural }: { table: "categorie
     e.preventDefault();
     const name = form.name.trim();
     const slug = slugify(form.slug || name);
-    if (!name || !slug) return toast.error("Please enter a name.");
+    if (!name || !slug) {
+      toast.error("Please enter a name.");
+      return;
+    }
     setBusy(true);
     const payload: Record<string, unknown> = { name, slug, description: form.description.trim() || null, active: form.active };
     if (isCat) {
-      payload.icon = form.icon.trim() || null;
-      payload.sort_order = Number(form.sort_order) || 0;
+      payload["icon"] = form.icon.trim() || null;
+      payload["sort_order"] = Number(form.sort_order) || 0;
     }
     const { error } = form.id
       ? await supabase.from(table).update(payload as never).eq("id", form.id)
@@ -73,10 +76,16 @@ export function TaxonomyManager({ table, singular, plural }: { table: "categorie
   }
 
   async function remove(row: Row) {
-    if (counts[row.id]) return toast.error(`Move its ${counts[row.id]} product(s) first, or switch it off instead.`);
+    if (counts[row.id]) {
+      toast.error(`Move its ${counts[row.id]} product(s) first, or switch it off instead.`);
+      return;
+    }
     if (!confirm(`Delete ${row.name}?`)) return;
     const { error } = await supabase.from(table).delete().eq("id", row.id);
-    if (error) return toast.error(`Unable to delete ${singular.toLowerCase()}.`);
+    if (error) {
+      toast.error(`Unable to delete ${singular.toLowerCase()}.`);
+      return;
+    }
     toast.success(`${singular} deleted.`);
     load();
   }

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { fetchProductsByIds, type StoreProduct } from "./store";
+import { effectivePrice, fetchProductsByIds, type StoreProduct } from "./store";
 
 export type CartLine = { id: string; qty: number };
 
@@ -9,6 +9,9 @@ type CartContextValue = {
   count: number;
   subtotal: number;
   loading: boolean;
+  /** True when any cart line is out of stock or above available quantity. */
+  hasStockIssue: boolean;
+  refresh: () => void;
   add: (id: string, qty?: number) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
@@ -39,6 +42,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [catalogue, setCatalogue] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(false);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     setLines(readStore<CartLine[]>(CART_KEY, []));
@@ -80,7 +84,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [idKey, hydrated]);
+  }, [idKey, hydrated, tick]);
 
   const value = useMemo<CartContextValue>(() => {
     const items = lines
@@ -95,17 +99,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items,
       loading,
       count: items.reduce((sum, i) => sum + i.qty, 0),
-      subtotal: items.reduce((sum, i) => sum + i.qty * i.product.price, 0),
+      subtotal: items.reduce((sum, i) => sum + i.qty * effectivePrice(i.product), 0),
+      hasStockIssue: items.some((i) => i.qty > i.product.stock_quantity),
+      refresh: () => setTick((t) => t + 1),
       add: (id, qty = 1) =>
         setLines((prev) => {
+          const max = catalogue.find((p) => p.id === id)?.stock_quantity;
+          const cap = (n: number) => (typeof max === "number" ? Math.min(n, max) : n);
           const existing = prev.find((l) => l.id === id);
-          if (existing) return prev.map((l) => (l.id === id ? { ...l, qty: l.qty + qty } : l));
-          return [...prev, { id, qty }];
+          if (existing) return prev.map((l) => (l.id === id ? { ...l, qty: cap(l.qty + qty) } : l));
+          return [...prev, { id, qty: Math.max(1, qty) }];
         }),
       remove: (id) => setLines((prev) => prev.filter((l) => l.id !== id)),
       setQty: (id, qty) =>
         setLines((prev) =>
-          qty <= 0 ? prev.filter((l) => l.id !== id) : prev.map((l) => (l.id === id ? { ...l, qty } : l)),
+          qty <= 0
+            ? prev.filter((l) => l.id !== id)
+            : prev.map((l) => {
+                if (l.id !== id) return l;
+                const max = catalogue.find((p) => p.id === id)?.stock_quantity;
+                return { ...l, qty: typeof max === "number" ? Math.min(qty, Math.max(max, 1)) : qty };
+              }),
         ),
       clear: () => setLines([]),
       wishlist,

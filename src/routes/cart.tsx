@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/site/PageShell";
 import { StoreProductImage } from "@/components/site/StoreProductImage";
 import { useCart } from "@/lib/cart";
+import { effectivePrice } from "@/lib/store";
 import { formatKes } from "@/lib/site";
 
 export const Route = createFileRoute("/cart")({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { items, setQty, remove, subtotal } = useCart();
+  const { items, setQty, remove, subtotal, hasStockIssue } = useCart();
 
   return (
     <>
@@ -54,14 +55,19 @@ function CartPage() {
                     >
                       {product.title}
                     </Link>
-                    <p className="mt-1 text-xs text-muted-foreground">AGIKA Technologies</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{product.brand?.name ?? "AGIKA Technologies"}</p>
+                    {product.stock_quantity <= 0 ? (
+                      <p className="mt-1 text-xs font-medium text-destructive">Out of stock — please remove this item</p>
+                    ) : qty > product.stock_quantity ? (
+                      <p className="mt-1 text-xs font-medium text-destructive">Only {product.stock_quantity} available — reduce quantity</p>
+                    ) : null}
                     <div className="mt-3 flex items-center gap-3">
                       <div className="flex items-center rounded-lg border border-border">
                         <Button variant="ghost" size="icon" onClick={() => setQty(product.id, qty - 1)} aria-label="Decrease quantity">
                           <Minus className="h-4 w-4" />
                         </Button>
                         <span className="w-8 text-center text-sm font-semibold">{qty}</span>
-                        <Button variant="ghost" size="icon" onClick={() => setQty(product.id, qty + 1)} aria-label="Increase quantity">
+                        <Button variant="ghost" size="icon" disabled={qty >= product.stock_quantity} onClick={() => setQty(product.id, qty + 1)} aria-label="Increase quantity">
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
@@ -70,7 +76,7 @@ function CartPage() {
                       </Button>
                     </div>
                   </div>
-                  <p className="font-display font-bold">{formatKes(product.price * qty)}</p>
+                  <p className="font-display font-bold">{formatKes(effectivePrice(product) * qty)}</p>
                 </div>
               ))}
             </div>
@@ -95,9 +101,15 @@ function CartPage() {
                 <span>Total</span>
                 <span>{formatKes(subtotal)}</span>
               </div>
-              <Button asChild className="mt-4 w-full">
-                <Link to="/checkout">Proceed to Checkout</Link>
-              </Button>
+              {hasStockIssue ? (
+                <Button className="mt-4 w-full" disabled>
+                  Fix stock issues to continue
+                </Button>
+              ) : (
+                <Button asChild className="mt-4 w-full">
+                  <Link to="/checkout">Proceed to Checkout</Link>
+                </Button>
+              )}
               <Button asChild variant="ghost" className="mt-2 w-full">
                 <Link to="/shop">Continue Shopping</Link>
               </Button>

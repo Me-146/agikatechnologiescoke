@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminPageHeader } from "@/components/admin/AdminShell";
+import { ProductExtraFields, emptyExtras, extrasToRow } from "@/components/admin/ProductExtraFields";
 import { assertAdmin, removeStorageObject, uploadProductImage, validateImage } from "@/lib/admin-products";
 
 export const Route = createFileRoute("/admin/products/new")({
@@ -32,6 +33,7 @@ function NewProductPage() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [extras, setExtras] = useState(emptyExtras);
   const [status, setStatus] = useState<"idle" | "uploading" | "saving">("idle");
 
   useEffect(() => {
@@ -69,6 +71,11 @@ function NewProductPage() {
       toast.error("Please enter a price greater than zero.");
       return;
     }
+    const ex = extrasToRow(extras, priceValue);
+    if ("error" in ex) {
+      toast.error(ex.error);
+      return;
+    }
     if (!file) {
       toast.error("Please upload a JPG or PNG image.");
       return;
@@ -93,7 +100,7 @@ function NewProductPage() {
         description: description.trim(),
         image_url: uploaded.url,
         created_by: uid,
-        published: false,
+        ...ex.row,
       });
       if (error) {
         console.error("[admin] product insert failed", error);
@@ -101,7 +108,8 @@ function NewProductPage() {
         throw new Error("Unable to save product. Please try again.");
       }
 
-      toast.success("Product created successfully. It is currently unpublished.");
+      toast.success(ex.row.published ? "Product created and published." : "Product created successfully. It is currently unpublished.");
+      setExtras(emptyExtras);
       setTitle("");
       setPrice("");
       setDescription("");
@@ -166,6 +174,8 @@ function NewProductPage() {
               placeholder="Specs, condition, warranty…"
             />
           </div>
+
+          <ProductExtraFields value={extras} onChange={setExtras} />
 
           <div className="space-y-2">
             <Label htmlFor="product-image">Product image (JPG or PNG, max 5MB)</Label>

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminPageHeader } from "@/components/admin/AdminShell";
+import { ProductExtraFields, emptyExtras, extrasToRow } from "@/components/admin/ProductExtraFields";
+import type { ProductSpec } from "@/lib/store";
 import {
   assertAdmin,
   removeStorageObject,
@@ -42,13 +44,14 @@ function EditProductPage() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [extras, setExtras] = useState(emptyExtras);
   const [status, setStatus] = useState<"idle" | "uploading" | "saving">("idle");
 
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,title,price,description,image_url,created_at")
+        .select("id,title,price,description,image_url,created_at,published,sku,category_id,brand_id,sale_price,stock_quantity,low_stock_threshold,specifications")
         .eq("id", id)
         .maybeSingle();
       if (error || !data) {
@@ -62,6 +65,17 @@ function EditProductPage() {
       setTitle(row.title);
       setPrice(String(row.price));
       setDescription(row.description ?? "");
+      const d = data as Record<string, unknown>;
+      setExtras({
+        sku: (d.sku as string) ?? "",
+        category_id: (d.category_id as string) ?? "",
+        brand_id: (d.brand_id as string) ?? "",
+        sale_price: d.sale_price == null ? "" : String(d.sale_price),
+        stock_quantity: String(d.stock_quantity ?? 0),
+        low_stock_threshold: String(d.low_stock_threshold ?? 3),
+        specifications: Array.isArray(d.specifications) ? (d.specifications as ProductSpec[]) : [],
+        published: Boolean(d.published),
+      });
       setLoading(false);
     })();
   }, [id]);
@@ -102,6 +116,12 @@ function EditProductPage() {
       return;
     }
 
+    const ex = extrasToRow(extras, priceValue);
+    if ("error" in ex) {
+      toast.error(ex.error);
+      return;
+    }
+
     let newPath: string | null = null;
     try {
       await assertAdmin();
@@ -122,6 +142,7 @@ function EditProductPage() {
           price: priceValue,
           description: description.trim(),
           image_url: imageUrl,
+          ...ex.row,
         })
         .eq("id", product.id);
 
@@ -199,6 +220,8 @@ function EditProductPage() {
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" rows={5} required value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
+
+          <ProductExtraFields value={extras} onChange={setExtras} />
 
           <div className="space-y-2">
             <Label htmlFor="product-image">Replace image (optional — JPG or PNG, max 5MB)</Label>

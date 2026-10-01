@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StoreProductImage } from "@/components/site/StoreProductImage";
 import { formatKes, site, waLink } from "@/lib/site";
-import { fetchProductById, productInquiryMessage, type StoreProduct } from "@/lib/store";
+import { effectivePrice, fetchProductById, productInquiryMessage, stockLabel, type StoreProduct } from "@/lib/store";
 import { useCart } from "@/lib/cart";
 
 export const Route = createFileRoute("/products/$id")({
@@ -91,6 +91,11 @@ function ProductDetailPage() {
   }
 
   const { product, preview } = state;
+  const price = effectivePrice(product);
+  const onSale = price < product.price;
+  const stock = product.stock_quantity;
+  const soldOut = stock <= 0;
+  const cantBuy = preview || soldOut;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -103,6 +108,14 @@ function ProductDetailPage() {
           Shop
         </Link>
         <span className="px-2">/</span>
+        {product.category && (
+          <>
+            <Link to="/shop/$category" params={{ category: product.category.slug }} className="hover:text-brand">
+              {product.category.name}
+            </Link>
+            <span className="px-2">/</span>
+          </>
+        )}
         <span className="text-foreground">{product.title}</span>
       </nav>
 
@@ -121,18 +134,48 @@ function ProductDetailPage() {
         />
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">AGIKA Technologies</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {product.brand ? (
+              <Link to="/shop" search={{ brand: product.brand.slug }} className="hover:text-brand">
+                {product.brand.name}
+              </Link>
+            ) : (
+              "AGIKA Technologies"
+            )}
+            {product.category && <> · {product.category.name}</>}
+          </p>
           <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">{product.title}</h1>
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-            <Badge variant="secondary">{preview ? "Unpublished" : "Available"}</Badge>
-            <span className="font-medium text-brand">In stock — confirm on WhatsApp</span>
+            {preview && <Badge variant="secondary">Unpublished</Badge>}
+            <Badge variant={soldOut ? "destructive" : "secondary"}>{stockLabel(product.stock_status)}</Badge>
+            {!soldOut && product.stock_status === "low-stock" && (
+              <span className="font-medium text-brand">Only {stock} left</span>
+            )}
+            {product.sku && <span className="text-muted-foreground">SKU: {product.sku}</span>}
           </div>
 
-          <div className="mt-5 font-display text-3xl font-bold">{formatKes(product.price)}</div>
+          <div className="mt-5 flex items-baseline gap-3">
+            <span className="font-display text-3xl font-bold">{formatKes(price)}</span>
+            {onSale && <span className="text-lg text-muted-foreground line-through">{formatKes(product.price)}</span>}
+          </div>
 
           {product.description && (
             <p className="mt-4 whitespace-pre-line text-sm text-muted-foreground">{product.description}</p>
+          )}
+
+          {product.specifications.length > 0 && (
+            <div className="mt-6 overflow-hidden rounded-xl border border-border">
+              <h2 className="bg-secondary px-4 py-2 font-display text-sm font-semibold">Specifications</h2>
+              <dl className="divide-y divide-border text-sm">
+                {product.specifications.map((s, i) => (
+                  <div key={i} className="grid grid-cols-[40%_1fr] gap-3 px-4 py-2">
+                    <dt className="text-muted-foreground">{s.label}</dt>
+                    <dd className="font-medium">{s.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           )}
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -141,16 +184,16 @@ function ProductDetailPage() {
                 <Minus className="h-4 w-4" />
               </Button>
               <span className="w-10 text-center text-sm font-semibold">{qty}</span>
-              <Button variant="ghost" size="icon" onClick={() => setQty((q) => q + 1)} aria-label="Increase quantity">
+              <Button variant="ghost" size="icon" disabled={qty >= stock} onClick={() => setQty((q) => Math.min(stock, q + 1))} aria-label="Increase quantity">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
 
             <Button
               variant="outline"
-              disabled={preview}
+              disabled={cantBuy}
               onClick={() => {
-                add(product.id, qty);
+                add(product.id, Math.min(qty, stock));
                 toast.success("Added to cart", { description: product.title });
               }}
             >
@@ -158,13 +201,13 @@ function ProductDetailPage() {
             </Button>
 
             <Button
-              asChild={!preview}
-              disabled={preview}
+              asChild={!cantBuy}
+              disabled={cantBuy}
               onClick={() => {
-                if (!preview) add(product.id, qty);
+                if (!cantBuy) add(product.id, Math.min(qty, stock));
               }}
             >
-              {preview ? <span>Buy Now</span> : <Link to="/checkout">Buy Now</Link>}
+              {cantBuy ? <span>{soldOut ? "Out of Stock" : "Buy Now"}</span> : <Link to="/checkout">Buy Now</Link>}
             </Button>
 
             <Button variant="ghost" size="icon" aria-label="Save to wishlist" onClick={() => toggleWishlist(product.id)}>
